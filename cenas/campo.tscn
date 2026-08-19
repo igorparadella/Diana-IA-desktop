@@ -1,0 +1,51 @@
+[gd_scene format=3 uid="uid://by4veun10uf58"]
+
+[ext_resource type="Script" uid="uid://dgu0yrmo6t02c" path="res://scripts/campo.gd" id="1_6b6vx"]
+
+[node name="campo" type="Control" unique_id=1630475217]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_6b6vx")
+
+[node name="Panel" type="Panel" parent="." unique_id=2120762753]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="Panel" unique_id=1792663482]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 5
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Panel/MarginContainer" unique_id=413106756]
+layout_mode = 2
+
+[node name="btn_mover" type="Button" parent="Panel/MarginContainer/HBoxContainer" unique_id=105774214]
+layout_mode = 2
+text = "⋮"
+
+[node name="CodeEdit" type="CodeEdit" parent="Panel/MarginContainer/HBoxContainer" unique_id=931502848]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Escreva sua mensagem"
+
+[node name="btn_enviar" type="Button" parent="Panel/MarginContainer/HBoxContainer" unique_id=1221330148]
+layout_mode = 2
+text = "Enviar"
+
+[connection signal="pressed" from="Panel/MarginContainer/HBoxContainer/btn_mover" to="." method="_on_btn_mover_pressed"]
+[connection signal="pressed" from="Panel/MarginContainer/HBoxContainer/btn_enviar" to="." method="_on_btn_enviar_pressed"]

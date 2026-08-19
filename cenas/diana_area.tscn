@@ -1,0 +1,19 @@
+[gd_scene format=3 uid="uid://dmfd8bytdrgv3"]
+
+[ext_resource type="Script" uid="uid://bbub7cohssrvx" path="res://scripts/diana_area.gd" id="1_j82l8"]
+[ext_resource type="PackedScene" uid="uid://cm1e1x6paatju" path="res://prefabs/diana/diana_padrao.res" id="2_ducun"]
+[ext_resource type="PackedScene" uid="uid://cwrys2xm3cy2l" path="res://prefabs/cliente.res" id="3_bncbh"]
+
+[node name="Node3D" type="Node3D" unique_id=1802679036]
+script = ExtResource("1_j82l8")
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=1256266454]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.262316, 0.8000581)
+projection = 1
+size = 0.8113438
+
+[node name="diana" parent="." unique_id=2115559976 instance=ExtResource("2_ducun")]
+
+[node name="cliente" parent="." unique_id=834820999 instance=ExtResource("3_bncbh")]
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="." unique_id=1949005161]
