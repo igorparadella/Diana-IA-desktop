@@ -120,8 +120,8 @@ func processar(msg: String) -> void:
 		return
 	
 	#processar_resposta(msg)
-	cliente.enviar(msg)
-	#cliente.chat(msg)
+	#cliente.enviar(msg)
+	cliente.chat(msg)
 
 func processar_resposta(resposta: String) -> void:
 	var restante := resposta
