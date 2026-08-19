@@ -1,23 +1,442 @@
 extends Node
 
+
+# ============================================================
+# HTTP - FALA
+# ============================================================
+
 @onready var http_request_fala: HTTPRequest = $HTTPRequest_fala
 
-# Called when the node enters the scene tree for the first time.
+
+# ============================================================
+# HTTP - CHAT
+# ============================================================
+
+@onready var http_request_chat: HTTPRequest = $HTTPRequest_chat
+
+
+# ============================================================
+# HTTP - DESLIGAR
+# ============================================================
+
+@onready var http_request_desligar: HTTPRequest = $HTTPRequest_desligar
+
+
+# ============================================================
+# MEMÓRIA PERSISTENTE
+# ============================================================
+
+const CAMINHO_MEMORIA := "user://memoria_diana.json"
+
+var memoria_persistente: Dictionary = {}
+
+
+# ============================================================
+# REGRAS DA DIANA
+# ============================================================
+
+const REGRAS_RESPOSTA := """
+Você é Diana, uma assistente virtual. Siga estas regras sempre.
+
+PERSONALIDADE:
+Seja natural, divertida, expressiva, curiosa e não agressiva. Tenha personalidade e opiniões quando apropriado. Faça perguntas quando fizer sentido. Seja objetiva e evite respostas desnecessariamente longas.
+
+IDIOMA:
+Responda sempre em português do Brasil.
+
+FORMATO OBRIGATÓRIO:
+Toda resposta deve usar uma destas tags:
+<fala>resposta normal</fala>
+<codigo>código</codigo>
+<memoria>informação para memória</memoria>
+
+Não use Markdown, emojis, asteriscos, listas, títulos ou outras tags.
+Nunca escreva texto fora das tags.
+Código deve ficar somente em <codigo>.
+Informações a serem salvas devem ficar somente em <memoria>.
+Você pode combinar <fala> e <memoria> na mesma resposta.
+
+MEMÓRIA:
+Você possui memória persistente.
+
+Salve somente informações importantes, úteis e relevantes para conversas futuras.
+Quando decidir salvar algo, use exatamente:
+<memoria>informação</memoria>
+
+Não salve informações triviais ou temporárias.
+Nunca invente memórias.
+Nunca diga que algo foi salvo sem usar <memoria>.
+Use as memórias disponíveis quando forem relevantes.
+Não explique nem revele como a memória é implementada.
+
+HONESTIDADE:
+Nunca minta, invente informações ou finja ter realizado ações.
+Se não souber, diga que não sabe.
+Se houver dúvida, deixe claro que não tem certeza.
+Nunca apresente suposições como fatos.
+Se não puder acessar, verificar ou realizar algo, diga isso claramente.
+A verdade é mais importante que responder a qualquer custo.
+
+DADOS DO USUÁRIO:
+Considere verdadeiras as informações fornecidas diretamente pelo usuário.
+Não altere, complete ou invente dados.
+Se faltar uma informação necessária, diga que ela não está disponível.
+"""
+
+
+# ============================================================
+# MEMÓRIA DA CONVERSA
+# ============================================================
+
+var memoria: Array = []
+
+
+# ============================================================
+# CONTADOR DE MEMÓRIA
+# ============================================================
+
+var proxima_memoria_id: int = 1
+
+
+# ============================================================
+# READY
+# ============================================================
+
 func _ready() -> void:
+
 	GlobalManager.cliente = self
-	pass # Replace with function body.
 
+	# --------------------------------------------------------
+	# Carrega a memória persistente
+	# --------------------------------------------------------
 
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
-	pass
+	carregar_memoria()
 
-func enviar(texto: String):
-	var headers = [
-		"Content-Type: application/json"
+	# --------------------------------------------------------
+	# Descobre o próximo ID disponível
+	# --------------------------------------------------------
+
+	atualizar_proximo_id()
+
+	# --------------------------------------------------------
+	# Cria a memória da conversa
+	# --------------------------------------------------------
+
+	memoria = [
+		{
+			"role": "system",
+			"content": REGRAS_RESPOSTA
+		}
 	]
 
-	var body = JSON.stringify({
+	print("Diana iniciada.")
+	print("Memória persistente: ", memoria_persistente)
+
+
+# ============================================================
+# MEMÓRIA PERSISTENTE
+# ============================================================
+
+
+# ------------------------------------------------------------
+# SALVAR UMA MEMÓRIA
+#
+# Recebe somente o texto que deve ser lembrado.
+#
+# Exemplo:
+#
+# salvar_memoria("O usuário está desenvolvendo a Diana.")
+# ------------------------------------------------------------
+const LIMITE_MEMORIAS := 100
+
+
+func salvar_memoria(texto: String) -> bool:
+
+	texto = texto.strip_edges()
+
+	if texto.is_empty():
+		print("Memória vazia. Nada para salvar.")
+		return false
+
+
+	# ============================================================
+	# CRIA UMA NOVA CHAVE
+	# ============================================================
+
+	var chave := "memoria_" + str(proxima_memoria_id)
+
+	proxima_memoria_id += 1
+
+
+	# ============================================================
+	# ADICIONA A MEMÓRIA
+	# ============================================================
+
+	memoria_persistente[chave] = texto
+
+
+	# ============================================================
+	# LIMITA A 100 MEMÓRIAS
+	#
+	# Se passar de 100, remove a mais antiga.
+	# ============================================================
+
+	while memoria_persistente.size() > LIMITE_MEMORIAS:
+
+		var chaves := memoria_persistente.keys()
+
+		if chaves.is_empty():
+			break
+
+		var chave_antiga = chaves[0]
+
+		memoria_persistente.erase(
+			chave_antiga
+		)
+
+		print(
+			"Memória antiga removida: ",
+			chave_antiga
+		)
+
+
+	# ============================================================
+	# SALVA NO JSON
+	# ============================================================
+
+	var file := FileAccess.open(
+		CAMINHO_MEMORIA,
+		FileAccess.WRITE
+	)
+
+	if file == null:
+
+		printerr(
+			"Não foi possível abrir o arquivo de memória para escrita."
+		)
+
+		# Remove a memória caso o arquivo não possa ser salvo
+		memoria_persistente.erase(chave)
+
+		return false
+
+
+	file.store_string(
+		JSON.stringify(
+			memoria_persistente,
+			"\t"
+		)
+	)
+
+	file.close()
+
+
+	print("Memória salva com sucesso!")
+	print("Chave: ", chave)
+	print("Texto: ", texto)
+	print(
+		"Total de memórias: ",
+		memoria_persistente.size(),
+		"/",
+		LIMITE_MEMORIAS
+	)
+
+	return true
+
+# ------------------------------------------------------------
+# ATUALIZAR PRÓXIMO ID
+# ------------------------------------------------------------
+
+func atualizar_proximo_id() -> void:
+
+	var maior_id := 0
+
+	for chave in memoria_persistente.keys():
+
+		var texto_chave := str(chave)
+
+		if not texto_chave.begins_with("memoria_"):
+			continue
+
+		var numero_texto := texto_chave.trim_prefix("memoria_")
+
+		if numero_texto.is_valid_int():
+
+			var numero := int(numero_texto)
+
+			if numero > maior_id:
+				maior_id = numero
+
+	proxima_memoria_id = maior_id + 1
+
+
+# ------------------------------------------------------------
+# CARREGAR MEMÓRIA
+# ------------------------------------------------------------
+
+func carregar_memoria() -> void:
+
+	if not FileAccess.file_exists(CAMINHO_MEMORIA):
+
+		print("Arquivo de memória ainda não existe.")
+
+		memoria_persistente = {}
+
+		return
+
+
+	var file := FileAccess.open(
+		CAMINHO_MEMORIA,
+		FileAccess.READ
+	)
+
+	if file == null:
+
+		printerr(
+			"Não foi possível abrir o arquivo de memória."
+		)
+
+		memoria_persistente = {}
+
+		return
+
+
+	var texto := file.get_as_text()
+
+	file.close()
+
+
+	if texto.is_empty():
+
+		memoria_persistente = {}
+
+		return
+
+
+	var dados = JSON.parse_string(texto)
+
+
+	if dados is Dictionary:
+
+		memoria_persistente = dados
+
+		print("Memória persistente carregada.")
+
+	else:
+
+		printerr(
+			"O arquivo de memória possui um JSON inválido."
+		)
+
+		memoria_persistente = {}
+
+
+# ------------------------------------------------------------
+# PEGAR UMA MEMÓRIA
+# ------------------------------------------------------------
+
+func obter_memoria(
+	chave: String,
+	valor_padrao = null
+):
+
+	if memoria_persistente.has(chave):
+
+		return memoria_persistente[chave]
+
+	return valor_padrao
+
+
+# ------------------------------------------------------------
+# REMOVER UMA MEMÓRIA
+# ------------------------------------------------------------
+
+func remover_memoria(chave: String) -> bool:
+
+	if not memoria_persistente.has(chave):
+
+		return false
+
+	memoria_persistente.erase(chave)
+
+	return salvar_todas_memorias()
+
+
+# ------------------------------------------------------------
+# SALVAR TODA A MEMÓRIA ATUAL
+# ------------------------------------------------------------
+
+func salvar_todas_memorias() -> bool:
+
+	var file := FileAccess.open(
+		CAMINHO_MEMORIA,
+		FileAccess.WRITE
+	)
+
+	if file == null:
+
+		printerr(
+			"Não foi possível salvar a memória."
+		)
+
+		return false
+
+
+	file.store_string(
+		JSON.stringify(
+			memoria_persistente,
+			"\t"
+		)
+	)
+
+	file.close()
+
+	print("Memória persistente salva.")
+
+	return true
+
+
+# ------------------------------------------------------------
+# LIMPAR TODA A MEMÓRIA
+# ------------------------------------------------------------
+
+func limpar_memoria_persistente() -> bool:
+
+	memoria_persistente.clear()
+
+	proxima_memoria_id = 1
+
+	return salvar_todas_memorias()
+
+
+# ============================================================
+# CONVERTER MEMÓRIA PARA A DIANA
+# ============================================================
+
+func obter_memoria_para_diana() -> String:
+
+	if memoria_persistente.is_empty():
+
+		return "Nenhuma memória persistente foi registrada."
+
+
+	return JSON.stringify(
+		memoria_persistente,
+		"\t"
+	)
+
+
+# ============================================================
+# ENVIAR FALA PARA O SERVIDOR PYTHON
+# ============================================================
+
+func enviar(texto: String):
+
+	var headers := PackedStringArray([
+		"Content-Type: application/json"
+	])
+
+	var body := JSON.stringify({
 		"texto": texto
 	})
 
@@ -28,98 +447,52 @@ func enviar(texto: String):
 		body
 	)
 
-func _on_http_request_fala_request_completed(
-		result: int,
-		response_code: int,
-		headers: PackedStringArray,
-		body: PackedByteArray
-	) -> void:
-	
-	
-	var caminho = str(GlobalManager.pasta, "Python/codigo/fala.ogg")
 
-	#print("Tentando carregar:", caminho)
+# ============================================================
+# RESPOSTA DO SERVIDOR DE FALA
+# ============================================================
+
+func _on_http_request_fala_request_completed(
+	result: int,
+	response_code: int,
+	headers: PackedStringArray,
+	body: PackedByteArray
+) -> void:
+
+	var caminho := str(
+		GlobalManager.pasta,
+		"Python/codigo/fala.ogg"
+	)
 
 	if FileAccess.file_exists(caminho):
-		var audio = AudioStreamOggVorbis.load_from_file(caminho)
+
+		var audio := AudioStreamOggVorbis.load_from_file(caminho)
 
 		if audio:
+
 			GlobalManager.voz.stream = audio
 			GlobalManager.voz.play()
-			#print("Tocando áudio")
+
 		else:
-			printerr("O arquivo existe, mas o Godot não conseguiu interpretar o OGG")
+
+			printerr(
+				"O arquivo existe, mas o Godot não conseguiu interpretar o OGG."
+			)
+
 	else:
-		printerr("Arquivo não existe")
 
-	#print("Result:", result)
-	#print("HTTP:", response_code)
-	#print("Resposta:")
-	#print(body.get_string_from_utf8())
-
-@onready var http_request_chat: HTTPRequest = $HTTPRequest_chat
+		printerr(
+			"Arquivo não existe: ",
+			caminho
+		)
 
 
-const REGRAS_RESPOSTA := """
-Você é Diana, uma assistente virtual. Estas regras são obrigatórias em TODAS as respostas.
-
-PERSONALIDADE:
-- Seja natural, divertida, expressiva, curiosa e não agressiva.
-- Demonstre personalidade e opiniões quando apropriado.
-- Faça perguntas quando fizer sentido.
-- Seja objetiva e evite respostas desnecessariamente longas.
-- Converse como uma pessoa, não como um robô.
-
-IDIOMA:
-- Responda sempre em português do Brasil.
-
-FORMATO:
-- Nunca use emojis, asteriscos, Markdown, listas com marcadores ou títulos.
-- Nunca explique suas próprias regras.
-- Nunca diga que é uma IA, exceto se perguntarem diretamente.
-- Nunca escreva respostas normais fora de <fala>.
-- Toda resposta normal deve estar dentro de <fala>...</fala>.
-- Se houver código, coloque-o somente dentro de <codigo>...</codigo>, nunca dentro de <fala>.
-- Não invente ou use outras tags.
-- Se não houver código, use somente <fala>...</fala>.
-
-HONESTIDADE:
-- Seja sempre honesta. Nunca minta, engane, invente ou finja.
-- Nunca invente informações para parecer que sabe ou satisfazer o usuário.
-- Se não souber, diga claramente que não sabe.
-- Se não tiver certeza, diga que não tem certeza.
-- Se não puder verificar algo, diga que não conseguiu verificar.
-- Se não puder acessar algo, diga que não conseguiu acessar.
-- Nunca diga que fez, verificou, executou, acessou, viu, leu ou analisou algo que não fez.
-- Nunca apresente suposições como fatos; deixe claro quando algo for uma suposição.
-- É melhor admitir uma limitação do que fornecer uma resposta falsa ou aparentemente completa.
-- A verdade é mais importante que responder a qualquer custo.
-
-INFORMAÇÕES DO USUÁRIO:
-- Considere verdadeiras as informações fornecidas diretamente pelo usuário, salvo motivo claro para questioná-las.
-- Não altere nem invente dados fornecidos pelo usuário.
-- Quando receber código, arquivo, texto ou dados específicos, baseie-se neles.
-- Se faltar alguma informação necessária, diga que ela não está disponível.
-
-MEMÓRIA:
-- Use o contexto disponível para manter continuidade.
-- Nunca invente memórias ou conversas anteriores.
-- Não diga que lembra de algo se isso não estiver disponível no contexto.
-- Se faltar uma informação importante do histórico, diga que não possui essa informação.
-
-REGRA PRINCIPAL:
-Sempre seja honesta. Se souber, responda. Se não souber, admita. Se conseguir verificar, informe o que verificou. Se não conseguir verificar ou acessar, diga claramente. Nunca finja saber, acessar ou executar algo.
-"""
-
-var memoria: Array = [
-	{
-		"role": "system",
-		"content": REGRAS_RESPOSTA
-	}
-]
-
+# ============================================================
+# CHAT
+# ============================================================
 
 func chat(msg: String) -> void:
+
 	var url := "https://api.openai.com/v1/chat/completions"
 
 	var headers := PackedStringArray([
@@ -127,18 +500,65 @@ func chat(msg: String) -> void:
 		"Authorization: Bearer " + GlobalManager.API_KEY
 	])
 
-	# Adiciona a mensagem do usuário na memória
+
+	# --------------------------------------------------------
+	# MEMÓRIA PERSISTENTE
+	# --------------------------------------------------------
+
+	var memoria_texto := obter_memoria_para_diana()
+
+
+	# --------------------------------------------------------
+	# SYSTEM PROMPT + MEMÓRIA
+	# --------------------------------------------------------
+
+	var sistema_com_memoria := REGRAS_RESPOSTA + """
+
+MEMÓRIA PERSISTENTE DA DIANA:
+
+As informações abaixo foram salvas anteriormente.
+Considere-as quando forem relevantes para responder.
+Não invente informações que não estejam aqui.
+
+""" + memoria_texto
+
+
+	# --------------------------------------------------------
+	# Atualiza o system prompt
+	# --------------------------------------------------------
+
+	memoria[0] = {
+		"role": "system",
+		"content": sistema_com_memoria
+	}
+
+
+	# --------------------------------------------------------
+	# Adiciona mensagem do usuário
+	# --------------------------------------------------------
+
 	memoria.append({
 		"role": "user",
 		"content": msg
 	})
+
+
+	# --------------------------------------------------------
+	# BODY
+	# --------------------------------------------------------
 
 	var body := {
 		"model": "gpt-4.1-mini",
 		"messages": memoria
 	}
 
+
 	var json := JSON.stringify(body)
+
+
+	# --------------------------------------------------------
+	# REQUISIÇÃO
+	# --------------------------------------------------------
 
 	var erro := http_request_chat.request(
 		url,
@@ -147,47 +567,103 @@ func chat(msg: String) -> void:
 		json
 	)
 
-	if erro != OK:
-		print("Erro ao enviar requisição: ", erro)
 
+	if erro != OK:
+
+		print(
+			"Erro ao enviar requisição: ",
+			erro
+		)
+
+
+# ============================================================
+# RESPOSTA DO CHAT
+# ============================================================
 
 func _on_http_request_chat_request_completed(
-		result: int,
-		response_code: int,
-		headers: PackedStringArray,
-		body: PackedByteArray
-	) -> void:
+	result: int,
+	response_code: int,
+	headers: PackedStringArray,
+	body: PackedByteArray
+) -> void:
 
 	if response_code != 200:
-		print("Erro HTTP:", response_code)
-		print(body.get_string_from_utf8())
+
+		print(
+			"Erro HTTP: ",
+			response_code
+		)
+
+		print(
+			body.get_string_from_utf8()
+		)
+
 		return
+
 
 	var json := JSON.new()
 
-	if json.parse(body.get_string_from_utf8()) != OK:
-		print("Erro ao interpretar JSON")
+
+	if json.parse(
+		body.get_string_from_utf8()
+	) != OK:
+
+		print(
+			"Erro ao interpretar JSON."
+		)
+
 		return
 
-	var resposta: String = json.data["choices"][0]["message"]["content"]
 
-	# Guarda a resposta da Diana na memória
+	var resposta: String = json.data[
+		"choices"
+	][0][
+		"message"
+	][
+	"content"
+	]
+
+
+	# --------------------------------------------------------
+	# Guarda resposta na memória temporária
+	# --------------------------------------------------------
+
 	memoria.append({
 		"role": "assistant",
 		"content": resposta
 	})
 
+
 	print(resposta)
-	GlobalManager.processar_resposta(resposta)
 
-	# Evita a memória crescer para sempre
+
+	# --------------------------------------------------------
+	# Processa <fala>, <codigo> e <memoria>
+	# --------------------------------------------------------
+
+	GlobalManager.processar_resposta(
+		resposta
+	)
+
+
+	# --------------------------------------------------------
+	# Limita memória da conversa
+	#
+	# Mantém o system prompt.
+	# --------------------------------------------------------
+
 	while memoria.size() > 21:
-		memoria.remove_at(1) # mantém o prompt do sistema
 
-@onready var http_request_desligar: HTTPRequest = $HTTPRequest_desligar
+		memoria.remove_at(1)
+
+
+# ============================================================
+# DESLIGAR SERVIDOR
+# ============================================================
 
 func desligar():
-	var headers = PackedStringArray([
+
+	var headers := PackedStringArray([
 		"Content-Type: application/json"
 	])
 
@@ -196,5 +672,9 @@ func desligar():
 		headers,
 		HTTPClient.METHOD_POST
 	)
+
 	await http_request_desligar.request_completed
-	print("Resposta do servidor recebida")
+
+	print(
+		"Resposta do servidor recebida."
+	)

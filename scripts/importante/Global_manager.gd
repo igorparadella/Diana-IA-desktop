@@ -14,7 +14,6 @@ const CAMINHO_JSON := "user://dados.json"
 
 var API_KEY
 
-
 var servidor_pid: int = -1
 
 
@@ -30,12 +29,15 @@ func _ready() -> void:
 	)
 
 	if arquivo_leitura:
+
 		var texto := arquivo_leitura.get_as_text()
+
 		arquivo_leitura.close()
 
 		var resultado = JSON.parse_string(texto)
 
 		if resultado != null:
+
 			API_KEY = resultado["chave"]
 
 
@@ -44,8 +46,11 @@ func _ready() -> void:
 	# ============================================================
 
 	if OS.has_feature("editor"):
+
 		pasta = ProjectSettings.globalize_path("res://")
+
 	else:
+
 		pasta = OS.get_executable_path().get_base_dir()
 
 
@@ -79,20 +84,28 @@ func _ready() -> void:
 	rodar_script_sh()
 
 
-
 # ============================================================
 # INICIAR SERVIDOR
 # ============================================================
 
 func rodar_script_sh() -> void:
-	var caminho := pasta.path_join("Python/roda_servidor.sh")
+
+	var caminho := pasta.path_join(
+		"Python/roda_servidor.sh"
+	)
 
 	print("Servidor Python:")
 	print(caminho)
 
+
 	if not FileAccess.file_exists(caminho):
-		print("ERRO: roda_servidor.sh não encontrado!")
+
+		print(
+			"ERRO: roda_servidor.sh não encontrado!"
+		)
+
 		return
+
 
 	var pid := OS.create_process(
 		"gnome-terminal",
@@ -104,96 +117,336 @@ func rodar_script_sh() -> void:
 		false
 	)
 
+
 	if pid == -1:
-		print("ERRO: não foi possível abrir o terminal!")
+
+		print(
+			"ERRO: não foi possível abrir o terminal!"
+		)
+
 	else:
-		print("Terminal do servidor aberto!")
-		print("PID:", pid)
+
+		print(
+			"Terminal do servidor aberto!"
+		)
+
+		print(
+			"PID:",
+			pid
+		)
+
 
 # ============================================================
 # PROCESSAR MENSAGEM
 # ============================================================
 
-func processar(msg: String) -> void:
+func processar(msg: String) -> void: # nuca pagar nada dessa func
 
 	if msg == "" or msg == null:
 		return
-	
+
 	#processar_resposta(msg)
 	#cliente.enviar(msg)
 	cliente.chat(msg)
+	
+	#processar_resposta(msg)
+
+
+# ============================================================
+# PROCESSAR RESPOSTA DA DIANA
+# ============================================================
 
 func processar_resposta(resposta: String) -> void:
+
 	var restante := resposta
-	
+
+
 	while true:
+
 		var inicio := restante.find("<")
-		
+
+
+		# --------------------------------------------------------
 		# Não existem mais blocos especiais
+		# --------------------------------------------------------
+
 		if inicio == -1:
 			break
-		
-		var fim_tag := restante.find(">", inicio)
-		
+
+
+		# --------------------------------------------------------
+		# Procura o fim da tag
+		# --------------------------------------------------------
+
+		var fim_tag := restante.find(
+			">",
+			inicio
+		)
+
+
+		# --------------------------------------------------------
 		# Tag incompleta
+		# --------------------------------------------------------
+
 		if fim_tag == -1:
 			break
-		
+
+
+		# --------------------------------------------------------
+		# Nome da tag
+		# --------------------------------------------------------
+
 		var tag := restante.substr(
 			inicio + 1,
 			fim_tag - inicio - 1
 		)
-		
+
+
+		# --------------------------------------------------------
 		# Ignora tags de fechamento
+		# --------------------------------------------------------
+
 		if tag.begins_with("/"):
-			restante = restante.substr(fim_tag + 1)
+
+			restante = restante.substr(
+				fim_tag + 1
+			)
+
 			continue
-		
+
+
+		# --------------------------------------------------------
+		# Procura a tag de fechamento
+		# --------------------------------------------------------
+
 		var tag_fechamento := "</" + tag + ">"
-		var fim := restante.find(tag_fechamento, fim_tag + 1)
-		
+
+		var fim := restante.find(
+			tag_fechamento,
+			fim_tag + 1
+		)
+
+
+		# --------------------------------------------------------
 		# Bloco ainda não terminou
+		# --------------------------------------------------------
+
 		if fim == -1:
 			break
-		
+
+
+		# --------------------------------------------------------
 		# Conteúdo dentro da tag
+		# --------------------------------------------------------
+
 		var inicio_conteudo := fim_tag + 1
-		
+
 		var conteudo := restante.substr(
 			inicio_conteudo,
 			fim - inicio_conteudo
 		).strip_edges()
-		
-		# Processa o tipo de bloco
-		processar_bloco(tag, conteudo)
-		
-		# Remove o bloco processado
-		restante = (
-			restante.substr(0, inicio)
-			+ restante.substr(fim + tag_fechamento.length())
+
+
+		# --------------------------------------------------------
+		# Processa o bloco
+		# --------------------------------------------------------
+
+		processar_bloco(
+			tag,
+			conteudo
 		)
 
 
-	# O que sobrou é texto normal
+		# --------------------------------------------------------
+		# Remove o bloco processado
+		# --------------------------------------------------------
+
+		restante = (
+			restante.substr(
+				0,
+				inicio
+			)
+			+
+			restante.substr(
+				fim + tag_fechamento.length()
+			)
+		)
+
+
+	# ============================================================
+	# TEXTO QUE SOBROU
+	# ============================================================
+
 	restante = restante.strip_edges()
-	
-	#if not restante.is_empty():
-		#cliente.enviar(restante)
 
 
-func processar_bloco(tipo: String, conteudo: String) -> void:
+	# Se quiser enviar qualquer texto fora das tags para a fala:
+	#
+	# if not restante.is_empty():
+	#     cliente.enviar(restante)
+
+
+# ============================================================
+# PROCESSAR BLOCO
+# ============================================================
+
+func processar_bloco(
+	tipo: String,
+	conteudo: String
+) -> void:
+
 	match tipo:
+
+		# --------------------------------------------------------
+		# CÓDIGO
+		# --------------------------------------------------------
+
 		"codigo":
-			mostrar_codigo({"codigo" : conteudo})
-		
+
+			mostrar_codigo({
+				"codigo": conteudo
+			})
+
+
+		# --------------------------------------------------------
+		# COMANDO
+		# --------------------------------------------------------
+
 		"comando":
-			print("comando: ", conteudo)
-		
+
+			print(
+				"Comando: ",
+				conteudo
+			)
+
+
+		# --------------------------------------------------------
+		# MEMÓRIA
+		#
+		# O conteúdo inteiro é a memória.
+		#
+		# Exemplo:
+		#
+		# <memoria>O usuário gosta de Godot.</memoria>
+		#
+		# Não existe mais:
+		#
+		# chave: valor
+		# --------------------------------------------------------
+
+		"memoria":
+
+			salvar_memoria(
+				conteudo
+			)
+
+
+		# --------------------------------------------------------
+		# FALA
+		# --------------------------------------------------------
+
 		"fala":
-			cliente.enviar(conteudo)
+
+			if cliente != null:
+
+				cliente.enviar(
+					conteudo
+				)
+
+			else:
+
+				print(
+					"Erro: cliente não está disponível."
+				)
+
+
+		# --------------------------------------------------------
+		# DESCONHECIDO
+		# --------------------------------------------------------
+
 		_:
-			print("Bloco desconhecido: <", tipo, ">")
+
+			print(
+				"Bloco desconhecido: <",
+				tipo,
+				">"
+			)
+
 			print(conteudo)
+
+
+# ============================================================
+# SALVAR MEMÓRIA
+# ============================================================
+
+func salvar_memoria(conteudo: String) -> void:
+
+	conteudo = conteudo.strip_edges()
+
+
+	# --------------------------------------------------------
+	# Não salva memória vazia
+	# --------------------------------------------------------
+
+	if conteudo.is_empty():
+
+		print(
+			"Memória vazia. Nada para salvar."
+		)
+
+		return
+
+
+	# --------------------------------------------------------
+	# Verifica se o cliente existe
+	# --------------------------------------------------------
+
+	if cliente == null:
+
+		print(
+			"Erro: cliente não está disponível."
+		)
+
+		return
+
+
+	# --------------------------------------------------------
+	# Envia o texto inteiro para o cliente
+	# --------------------------------------------------------
+
+	var sucesso = cliente.salvar_memoria(
+		conteudo
+	)
+
+
+	# --------------------------------------------------------
+	# Resultado
+	# --------------------------------------------------------
+
+	if sucesso:
+
+		print(
+			"========================================"
+		)
+
+		print(
+			"MEMÓRIA REGISTRADA"
+		)
+
+		print(
+			conteudo
+		)
+
+		print(
+			"========================================"
+		)
+
+	else:
+
+		print(
+			"Falha ao salvar memória."
+		)
+
 
 # ============================================================
 # FECHAMENTO DA JANELA
@@ -202,6 +455,7 @@ func processar_bloco(tipo: String, conteudo: String) -> void:
 func _notification(what: int) -> void:
 
 	if what == NOTIFICATION_WM_CLOSE_REQUEST:
+
 		antes_de_fechar()
 
 
@@ -211,7 +465,9 @@ func _notification(what: int) -> void:
 
 func antes_de_fechar() -> void:
 
-	print("Fechando app...")
+	print(
+		"Fechando app..."
+	)
 
 
 	# ========================================================
@@ -219,6 +475,7 @@ func antes_de_fechar() -> void:
 	# ========================================================
 
 	if cliente != null:
+
 		await cliente.desligar()
 
 
@@ -228,7 +485,9 @@ func antes_de_fechar() -> void:
 
 	if servidor_pid != -1:
 
-		print("Encerrando servidor Python...")
+		print(
+			"Encerrando servidor Python..."
+		)
 
 		OS.kill(
 			servidor_pid
@@ -244,29 +503,58 @@ func antes_de_fechar() -> void:
 	get_tree().quit()
 
 
+# ============================================================
+# MOSTRAR CÓDIGO
+# ============================================================
 
-func mostrar_codigo(dados: Dictionary = {}) -> Window:
+func mostrar_codigo(
+	dados: Dictionary = {}
+) -> Window:
+
 	var titulo: String = "Nova Janela"
-	var cena: String = "res://prefabs/codigo.tscn"
+
+	var cena: String = (
+		"res://prefabs/codigo.tscn"
+	)
+
 	var largura: int = 400
+
 	var altura: int = 500
+
 	var janela := Window.new()
 
+
+	# ============================================================
+	# CONFIGURAÇÃO
+	# ============================================================
+
 	janela.title = titulo
-	janela.size = Vector2i(largura, altura)
+
+	janela.size = Vector2i(
+		largura,
+		altura
+	)
+
 	janela.unresizable = false
+
 	janela.always_on_top = false
+
 	janela.transparent = true
+
 	janela.maximize_disabled = false
+
 	janela.borderless = false
+
 
 	# ============================================================
 	# FECHAR
 	# ============================================================
 
-	janela.close_requested.connect(func():
-		janela.queue_free()
+	janela.close_requested.connect(
+		func():
+			janela.queue_free()
 	)
+
 
 	# ============================================================
 	# POSIÇÃO
@@ -276,8 +564,10 @@ func mostrar_codigo(dados: Dictionary = {}) -> Window:
 
 	janela.position = Vector2i(
 		tela.position.x,
-		tela.position.y + (tela.size.y - janela.size.y) / 2
+		tela.position.y
+		+ (tela.size.y - janela.size.y) / 2
 	)
+
 
 	# ============================================================
 	# CARREGA A CENA
@@ -285,22 +575,40 @@ func mostrar_codigo(dados: Dictionary = {}) -> Window:
 
 	var packed_scene := load(cena) as PackedScene
 
+
 	if packed_scene:
+
 		var instancia := packed_scene.instantiate()
 
+
+		# --------------------------------------------------------
 		# Passa o dicionário para a cena
+		# --------------------------------------------------------
+
 		instancia.dados = dados
 
-		janela.add_child(instancia)
+
+		janela.add_child(
+			instancia
+		)
 
 	else:
-		push_error("Não foi possível carregar a cena: " + cena)
+
+		push_error(
+			"Não foi possível carregar a cena: "
+			+ cena
+		)
+
 
 	# ============================================================
 	# MOSTRA
 	# ============================================================
 
-	add_child(janela)
+	add_child(
+		janela
+	)
+
 	janela.show()
+
 
 	return janela
