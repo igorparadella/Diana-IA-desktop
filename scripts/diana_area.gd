@@ -58,11 +58,11 @@ func _ready() -> void:
 
 
 func criar_janela(
-	titulo: String = "Nova Janela",
-	cena: String = "res://cenas/campo.tscn",
-	largura: int = 400,
-	altura: int = 50
-) -> Window:
+		titulo: String = "Nova Janela",
+		cena: String = "res://cenas/campo.tscn",
+		largura: int = 400,
+		altura: int = 50
+	) -> Window:
 	var janela := Window.new()
 
 	janela.title = titulo
