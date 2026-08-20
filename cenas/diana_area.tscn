@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://bbub7cohssrvx" path="res://scripts/diana_area.gd" id="1_j82l8"]
 [ext_resource type="PackedScene" uid="uid://cm1e1x6paatju" path="res://prefabs/diana/diana_padrao.res" id="2_ducun"]
 [ext_resource type="PackedScene" uid="uid://cwrys2xm3cy2l" path="res://prefabs/cliente.res" id="3_bncbh"]
+[ext_resource type="AudioStream" uid="uid://djvpud5yhr6gl" path="res://ola.ogg" id="4_2l52c"]
 
 [node name="Node3D" type="Node3D" unique_id=1802679036]
 script = ExtResource("1_j82l8")
@@ -17,3 +18,11 @@ size = 0.8113438
 [node name="cliente" parent="." unique_id=834820999 instance=ExtResource("3_bncbh")]
 
 [node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="." unique_id=1949005161]
+stream = ExtResource("4_2l52c")
+autoplay = true
+
+[node name="Timer" type="Timer" parent="." unique_id=1002930000]
+wait_time = 20.0
+autostart = true
+
+[connection signal="timeout" from="Timer" to="." method="_on_timer_timeout"]

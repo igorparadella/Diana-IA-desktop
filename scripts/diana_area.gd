@@ -94,3 +94,10 @@ func criar_janela(
 	janela.show()
 
 	return janela
+
+@onready var timer: Timer = $Timer
+
+func _on_timer_timeout() -> void:
+	GlobalManager.diana_aleatoria()
+	timer.wait_time = randf_range(300.0, 600.0)
+	timer.start()

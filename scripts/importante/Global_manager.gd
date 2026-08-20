@@ -16,6 +16,16 @@ var API_KEY
 
 var servidor_pid: int = -1
 
+var diana_status = {
+	"humor" : {
+		"feliciade" : 1,
+		"curiosidade" : 1,
+		"confianca" : 1,
+		"energia" : 1,
+		"tedio" : 1,
+	},
+	"fazendo" : "",
+}
 
 func _ready() -> void:
 
@@ -291,9 +301,9 @@ func processar_resposta(resposta: String) -> void:
 # ============================================================
 
 func processar_bloco(
-	tipo: String,
-	conteudo: String
-) -> void:
+		tipo: String,
+		conteudo: String
+	) -> void:
 
 	match tipo:
 
@@ -318,6 +328,19 @@ func processar_bloco(
 				"Comando: ",
 				conteudo
 			)
+		
+		"felicidade":
+			diana_status["humor"]["felicidade"] = float(conteudo)
+		"curiosidade":
+			diana_status["humor"]["curiosidade"] = float(conteudo)
+		"confianca":
+			diana_status["humor"]["confianca"] = float(conteudo)
+		"energia":
+			diana_status["humor"]["energia"] = float(conteudo)
+		"tedio":
+			diana_status["humor"]["tedio"] = float(conteudo)
+		"fazendo":
+			diana_status["fazendo"] = float(conteudo)
 
 
 		# --------------------------------------------------------
@@ -612,3 +635,15 @@ func mostrar_codigo(
 
 
 	return janela
+
+
+func diana_aleatoria():
+	var n = 1
+	
+	match n:
+		1:
+			cliente.chat("O usuário não interagiu com vc")
+		_:
+			print("tédio")
+	
+	pass

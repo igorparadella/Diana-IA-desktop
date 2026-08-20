@@ -135,9 +135,10 @@ var voz: AudioStreamPlayer
 # ============================================================
 # READY
 # ============================================================
+@onready var animation_player_2: AnimationPlayer = $Armature/AnimationPlayer2
 
 func _ready() -> void:
-
+	
 	randomize()
 
 	timer.wait_time = randf_range(2.0, 5.0)
@@ -146,6 +147,9 @@ func _ready() -> void:
 	# Pega o AudioStreamPlayer global
 	voz = GlobalManager.voz
 
+	animation_player_2.play("ola")
+	await animation_player_2.animation_finished
+	animation_player_2.play("idle")
 
 # ============================================================
 # PROCESS
