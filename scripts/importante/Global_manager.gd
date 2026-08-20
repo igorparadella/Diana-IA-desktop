@@ -619,9 +619,9 @@ func diana_aleatoria():
 			diana.tedio("celular")
 			# mecher no celular
 			pass
-		3:
+		#3:
 			# jogar no switch
-			pass
+			#pass
 		4:
 			# Fazer um desenho
 			pass
