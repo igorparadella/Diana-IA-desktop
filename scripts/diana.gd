@@ -138,16 +138,19 @@ var voz: AudioStreamPlayer
 @onready var animation_player_2: AnimationPlayer = $Armature/AnimationPlayer2
 
 func _ready() -> void:
-	
 	randomize()
 
 	timer.wait_time = randf_range(2.0, 5.0)
 	timer.start()
+	GlobalManager.diana = self
+	await get_tree().process_frame
+	inicio() 
 
-	# Pega o AudioStreamPlayer global
+
+func inicio():
 	voz = GlobalManager.voz
-
 	animation_player_2.play("ola")
+	voz.play()
 	await animation_player_2.animation_finished
 	animation_player_2.play("idle")
 
@@ -456,13 +459,29 @@ func exprecao(nome: String, velocidade: float = 0.0):
 	)
 
 
-# ============================================================
-# FUNÇÃO FALAR
-# ============================================================
 
-func falar():
+@onready var celular: Node3D = $Armature/Skeleton3D/BoneAttachment3D/celular
 
-	# Aqui você pode futuramente colocar
-	# sincronização fonética real.
 
-	pass
+var fazendo = ""
+
+func tedio(oque):
+	if fazendo != oque:
+		match fazendo:
+			"celular":
+				animation_player_2.play_backwards("pegar_celular")
+				await animation_player_2.animation_finished
+				animation_player_2.play("idle")
+				celular.visible = false
+				
+	fazendo = oque
+	match oque:
+		"celular":
+			celular.visible = true
+			animation_player_2.play("pegar_celular")
+			await animation_player_2.animation_finished
+			animation_player_2.play("mecher_no_celular")
+		
+		"idle":
+			animation_player_2.play("idle")
+		

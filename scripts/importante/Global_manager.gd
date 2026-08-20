@@ -16,6 +16,8 @@ var API_KEY
 
 var servidor_pid: int = -1
 
+var diana
+
 var diana_status = {
 	"humor" : {
 		"feliciade" : 1,
@@ -151,15 +153,13 @@ func rodar_script_sh() -> void:
 # ============================================================
 
 func processar(msg: String) -> void: # nuca pagar nada dessa func
-
 	if msg == "" or msg == null:
 		return
 
 	#processar_resposta(msg)
 	#cliente.enviar(msg)
 	cliente.chat(msg)
-	
-	#processar_resposta(msg)
+	diana.tedio("idle")
 
 
 # ============================================================
@@ -306,29 +306,16 @@ func processar_bloco(
 	) -> void:
 
 	match tipo:
-
-		# --------------------------------------------------------
-		# CÓDIGO
-		# --------------------------------------------------------
-
 		"codigo":
-
 			mostrar_codigo({
 				"codigo": conteudo
 			})
-
-
-		# --------------------------------------------------------
-		# COMANDO
-		# --------------------------------------------------------
-
 		"comando":
 
 			print(
 				"Comando: ",
 				conteudo
 			)
-		
 		"felicidade":
 			diana_status["humor"]["felicidade"] = float(conteudo)
 		"curiosidade":
@@ -340,23 +327,7 @@ func processar_bloco(
 		"tedio":
 			diana_status["humor"]["tedio"] = float(conteudo)
 		"fazendo":
-			diana_status["fazendo"] = float(conteudo)
-
-
-		# --------------------------------------------------------
-		# MEMÓRIA
-		#
-		# O conteúdo inteiro é a memória.
-		#
-		# Exemplo:
-		#
-		# <memoria>O usuário gosta de Godot.</memoria>
-		#
-		# Não existe mais:
-		#
-		# chave: valor
-		# --------------------------------------------------------
-
+			diana_status["fazendo"] = conteudo
 		"memoria":
 
 			salvar_memoria(
@@ -531,8 +502,8 @@ func antes_de_fechar() -> void:
 # ============================================================
 
 func mostrar_codigo(
-	dados: Dictionary = {}
-) -> Window:
+		dados: Dictionary = {}
+	) -> Window:
 
 	var titulo: String = "Nova Janela"
 
@@ -638,12 +609,35 @@ func mostrar_codigo(
 
 
 func diana_aleatoria():
-	var n = 1
+	var n = 2 #randi_range(1,10)
 	
 	match n:
 		1:
 			cliente.chat("O usuário não interagiu com vc")
+			# puchar conversa
+		2:
+			diana.tedio("celular")
+			# mecher no celular
+			pass
+		3:
+			# jogar no switch
+			pass
+		4:
+			# Fazer um desenho
+			pass
+		5:
+			# Ouvir música
+			pass
+		6:
+			# fazer um pequeno projeto
+			pass
+		7:
+			cliente.chat("O usuário não interagiu com vc, tenha um pensamento aleatório")
+		8:
+			# mexer nas próprias coisas
+			pass
+		9:
+			cliente.chat("O usuário não interagiu com vc, pense em alguma ideia nova para a Diana")
 		_:
-			print("tédio")
-	
-	pass
+			# tirar um cochilo
+			pass

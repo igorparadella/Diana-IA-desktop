@@ -451,7 +451,7 @@ func enviar(texto: String):
 	])
 
 	var body := JSON.stringify({
-		"texto": texto + str("diana_status: ",GlobalManager.diana_status)
+		"texto": texto
 	})
 
 	http_request_fala.request(
@@ -553,7 +553,7 @@ Não invente informações que não estejam aqui.
 
 	memoria.append({
 		"role": "user",
-		"content": msg
+		"content": msg + str("diana_status (vocẽ) : ",GlobalManager.diana_status)
 	})
 
 
