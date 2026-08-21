@@ -97,11 +97,11 @@ func criar_janela(
 
 @onready var timer: Timer = $Timer
 @export var contador = 0
-@export var contador_limite = 60
+@export var contador_limite = 120
 
 func _on_timer_timeout() -> void:
 	contador += 1
 	if contador >= contador_limite:
 		GlobalManager.diana_aleatoria()
-		contador_limite = randf_range(300.0, 600.0)
+		contador_limite = randf_range(180.0, 300.0)
 		contador = 0

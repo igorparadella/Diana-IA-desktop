@@ -409,8 +409,14 @@ func piscar() -> void:
 # ============================================================
 var tween_expressao: Tween
 
+@onready var timer_exprecao: Timer = $Timer_exprecao
+
 
 func exprecao(nome: String, velocidade: float = 0.0):
+
+	# ========================================================
+	# VELOCIDADE
+	# ========================================================
 
 	if velocidade != 0.0:
 		velocidade_transicao = velocidade
@@ -429,6 +435,9 @@ func exprecao(nome: String, velocidade: float = 0.0):
 	# ========================================================
 
 	if nome == "neutra":
+
+		# Para o timer caso ainda esteja rodando
+		timer_exprecao.stop()
 
 		tween_expressao = create_tween()
 
@@ -459,6 +468,18 @@ func exprecao(nome: String, velocidade: float = 0.0):
 		return
 
 
+	# ========================================================
+	# REINICIAR TEMPO DA EXPRESSÃO
+	# ========================================================
+
+	# Cada nova expressão ganha mais 5 segundos.
+	timer_exprecao.start(5.0)
+
+
+	# ========================================================
+	# ID DA EXPRESSÃO
+	# ========================================================
+
 	var id_alvo = exprecoes[nome]
 
 
@@ -473,8 +494,6 @@ func exprecao(nome: String, velocidade: float = 0.0):
 		var id = exprecoes[nome_expressao]
 		var valor_atual = face.get_blend_shape_value(id)
 
-		# A expressão que vamos ativar também é zerada
-		# antes de ser ativada novamente.
 		if valor_atual > 0.0:
 
 			tween_expressao.parallel().tween_method(
@@ -497,6 +516,19 @@ func exprecao(nome: String, velocidade: float = 0.0):
 		1.0,
 		velocidade_transicao
 	)
+
+
+# ============================================================
+# TIMER DA EXPRESSÃO
+# ============================================================
+
+func _on_timer_exprecao_timeout() -> void:
+	# Depois de 5 segundos sem uma nova expressão,
+	# volta automaticamente para neutra.
+	exprecao("neutra")
+
+
+
 @onready var celular: Node3D = $Armature/Skeleton3D/BoneAttachment3D/celular
 
 
