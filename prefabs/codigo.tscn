@@ -11,14 +11,6 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_o0l7l")
 
-[node name="TextureRect" type="TextureRect" parent="." unique_id=2053237008]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
 [node name="MarginContainer" type="MarginContainer" parent="." unique_id=65507131]
 layout_mode = 1
 anchors_preset = 15
@@ -29,3 +21,12 @@ grow_vertical = 2
 
 [node name="CodeEdit" type="CodeEdit" parent="MarginContainer" unique_id=1548034764]
 layout_mode = 2
+
+[node name="TextureRect" type="TextureRect" parent="." unique_id=2053237008]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2

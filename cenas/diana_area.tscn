@@ -21,7 +21,6 @@ size = 0.8113438
 stream = ExtResource("4_2l52c")
 
 [node name="Timer" type="Timer" parent="." unique_id=1002930000]
-wait_time = 300.0
 autostart = true
 
 [connection signal="timeout" from="Timer" to="." method="_on_timer_timeout"]

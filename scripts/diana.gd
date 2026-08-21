@@ -95,7 +95,7 @@ const MOUTH_O := 43
 const exprecoes = {
 	"brava": 1,
 	"divertida": 2,
-	"alegre": 3,
+	"alegre": 17,
 	"triste": 4,
 	"supresa": 5,
 }
@@ -407,6 +407,8 @@ func piscar() -> void:
 # ============================================================
 # EXPRESSÕES
 # ============================================================
+var tween_expressao: Tween
+
 
 func exprecao(nome: String, velocidade: float = 0.0):
 
@@ -415,30 +417,41 @@ func exprecao(nome: String, velocidade: float = 0.0):
 
 
 	# ========================================================
+	# LIMPAR TRANSIÇÃO ANTERIOR
+	# ========================================================
+
+	if tween_expressao and tween_expressao.is_valid():
+		tween_expressao.kill()
+
+
+	# ========================================================
 	# VOLTAR PARA NEUTRA
 	# ========================================================
 
 	if nome == "neutra":
 
-		var tween := create_tween()
+		tween_expressao = create_tween()
 
-		for i in exprecoes:
+		for nome_expressao in exprecoes:
 
-			var id = exprecoes[i]
+			var id = exprecoes[nome_expressao]
+			var valor_atual = face.get_blend_shape_value(id)
 
-			tween.parallel().tween_method(
-				func(v):
-					face.set_blend_shape_value(id, v),
-				face.get_blend_shape_value(id),
-				0.0,
-				velocidade_transicao
-			)
+			if valor_atual > 0.0:
+
+				tween_expressao.parallel().tween_method(
+					func(v):
+						face.set_blend_shape_value(id, v),
+					valor_atual,
+					0.0,
+					velocidade_transicao
+				)
 
 		return
 
 
 	# ========================================================
-	# EXPRESSÃO
+	# VERIFICAR SE EXISTE
 	# ========================================================
 
 	if not exprecoes.has(nome):
@@ -446,20 +459,44 @@ func exprecao(nome: String, velocidade: float = 0.0):
 		return
 
 
-	var id = exprecoes[nome]
+	var id_alvo = exprecoes[nome]
 
-	var tween := create_tween()
 
-	tween.tween_method(
+	# ========================================================
+	# LIMPAR TODAS AS EXPRESSÕES
+	# ========================================================
+
+	tween_expressao = create_tween()
+
+	for nome_expressao in exprecoes:
+
+		var id = exprecoes[nome_expressao]
+		var valor_atual = face.get_blend_shape_value(id)
+
+		# A expressão que vamos ativar também é zerada
+		# antes de ser ativada novamente.
+		if valor_atual > 0.0:
+
+			tween_expressao.parallel().tween_method(
+				func(v):
+					face.set_blend_shape_value(id, v),
+				valor_atual,
+				0.0,
+				velocidade_transicao
+			)
+
+
+	# ========================================================
+	# ATIVAR NOVA EXPRESSÃO
+	# ========================================================
+
+	tween_expressao.tween_method(
 		func(v):
-			face.set_blend_shape_value(id, v),
-		face.get_blend_shape_value(id),
+			face.set_blend_shape_value(id_alvo, v),
+		0.0,
 		1.0,
 		velocidade_transicao
 	)
-
-
-
 @onready var celular: Node3D = $Armature/Skeleton3D/BoneAttachment3D/celular
 
 

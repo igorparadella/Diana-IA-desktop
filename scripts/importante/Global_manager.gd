@@ -158,6 +158,7 @@ func processar(msg: String) -> void: # nuca pagar nada dessa func
 
 	#processar_resposta(msg)
 	#cliente.enviar(msg)
+	Diana_area.contador = 0
 	cliente.chat(msg)
 	diana.tedio("idle")
 
@@ -328,6 +329,8 @@ func processar_bloco(
 			diana_status["humor"]["tedio"] = float(conteudo)
 		"fazendo":
 			diana_status["fazendo"] = conteudo
+		"humor":
+			diana.exprecao(conteudo,1)
 		"memoria":
 
 			salvar_memoria(
@@ -609,7 +612,7 @@ func mostrar_codigo(
 
 
 func diana_aleatoria():
-	var n = 2 #randi_range(1,10)
+	var n = randi_range(1,10)
 	
 	match n:
 		1:
@@ -618,26 +621,22 @@ func diana_aleatoria():
 		2:
 			diana.tedio("celular")
 			# mecher no celular
-			pass
 		#3:
 			# jogar no switch
 			#pass
 		4:
+			cliente.chat("O usuário não interagiu com vc, crie uma imagem em SVG, mande o codigo em <codigo> o SVG</codigo>, vc tem liberdade para desenhar o que quiser, não pergunte o tema, escolha um vc mesma.")
 			# Fazer um desenho
-			pass
-		5:
+		#5:
 			# Ouvir música
-			pass
 		6:
+			cliente.chat("O usuário não interagiu com vc, crie um pequeno projeto sozinha, mande o código, e depois pergunte o que ele achou.")
 			# fazer um pequeno projeto
-			pass
 		7:
 			cliente.chat("O usuário não interagiu com vc, tenha um pensamento aleatório")
-		8:
+		#8:
 			# mexer nas próprias coisas
-			pass
 		9:
 			cliente.chat("O usuário não interagiu com vc, pense em alguma ideia nova para a Diana")
 		_:
-			# tirar um cochilo
-			pass
+			cliente.chat("O usuário não interagiu com vc, puche conversa.")
